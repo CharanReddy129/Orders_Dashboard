@@ -1,0 +1,11 @@
+node_modules
+backend/.venv
+.git
+.gitignore
+dist
+.vscode
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.log
