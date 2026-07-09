@@ -10,4 +10,4 @@ EXPOSE 8080
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "run.py"]
+CMD [ "gunicorn", "-w", "4", "-b", "0.0.0.0:8080","run:app" ]
