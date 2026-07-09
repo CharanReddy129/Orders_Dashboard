@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: prometheus-db
+    container_name: database
     environment:
       POSTGRES_DB: prometheus
       POSTGRES_USER: prometheus
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: prometheus-backend
+    container_name: backend
     working_dir: /app/backend
     command: python run.py
     environment:
@@ -42,7 +42,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: prometheus-frontend
+    container_name: frontend
     environment:
       VITE_API_BASE_URL: /api
       VITE_API_PROXY_TARGET: http://backend:8080
@@ -54,6 +54,19 @@ services:
       - .:/app
       - /app/node_modules
     restart: unless-stopped
+  
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus-monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - /home/charan/practise/prometheus/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
