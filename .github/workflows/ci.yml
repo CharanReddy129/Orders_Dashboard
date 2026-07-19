@@ -51,7 +51,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
 
-      - name: Build and Push frontend image
+      - name: Build frontend image
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -59,7 +59,7 @@ jobs:
           load: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.SHORT_SHA }}
       
-      - name: Build and Push backend image
+      - name: Build backend image
         uses: docker/build-push-action@v7
         with:
           context: ./backend
@@ -99,3 +99,39 @@ jobs:
         with:
           name: backend-image-report
           path: backend-image-report.json
+
+      - name: Push Images
+        run: |
+          docker push ${{ vars.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.SHORT_SHA }}
+          docker push ${{ vars.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:${{ env.SHORT_SHA }}
+
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          repository: CharanReddy129/orders-dashboard-gitops
+          token: ${{ secrets.GIT_TOKEN }}
+          path: gitops/
+
+      - name: Install yq 
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      
+      - name: Update Image tags
+        run: |
+          yq -i '.frontend.image.tag = ${{ env.SHORT_SHA }}' gitops/helm/values.yaml
+          yq -i '.backend.image.tag = ${{ env.SHORT_SHA}}' gitops/helm/values.yaml
+      
+      - name: Push changes to git
+        run: |
+          cd gitops
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add .
+          git commit -m "Updated image tag to ${{ env.SHORT_SHA }}" || echo "No changes"
+
+          git push
