@@ -41,7 +41,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile
     container_name: frontend
     environment:
       VITE_API_BASE_URL: /api
