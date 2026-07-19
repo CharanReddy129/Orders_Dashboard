@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-metrics-service
+  namespace: {{ include "orders-dashboard.namespace" . }}
+  labels:
+    {{- include "orders-dashboard.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "orders-dashboard.backendLabels" . | nindent 4 }}
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

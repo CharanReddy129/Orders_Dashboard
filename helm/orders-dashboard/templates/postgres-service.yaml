@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.service.name }}
+  namespace: {{ include "orders-dashboard.namespace" . }}
+  labels:
+    {{- include "orders-dashboard.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "orders-dashboard.postgresLabels" . | nindent 4 }}
+  ports:
+    - port: {{ .Values.postgres.service.port }}
+      targetPort: {{ .Values.postgres.service.port }}
+    

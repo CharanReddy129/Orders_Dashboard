@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.name }}
+  namespace: {{ include "orders-dashboard.namespace" . }}
+  labels:
+    {{- include "orders-dashboard.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "orders-dashboard.backendLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "orders-dashboard.backendLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.service.port }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12}}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "orders-dashboard.secretName" . }}
+                  key: DATABASE_URL
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "orders-dashboard.configMapName" . }}
+                  key: APP_ENV
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "orders-dashboard.configMapName" . }}
+                  key: LOG_LEVEL
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "orders-dashboard.secretName" . }}
+                  key: SECRET_KEY
+          
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3

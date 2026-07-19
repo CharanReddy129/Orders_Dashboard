@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: {{ .Values.postgres.name }}
+  namespace: {{ include "orders-dashboard.namespace" . }}
+  labels:
+    {{- include "orders-dashboard.labels" . | nindent 4 }}
+
+spec:
+  replicas: {{ .Values.postgres.replicaCount }}
+  serviceName: {{ .Values.postgres.service.headlessName }}
+  selector:
+    matchLabels:
+      {{- include "orders-dashboard.postgresLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "orders-dashboard.postgresLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "orders-dashboard.secretName" . }}
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "orders-dashboard.secretName" . }}
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "orders-dashboard.secretName" . }}
+                  key: POSTGRES_PASSWORD 
+          
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.postgres.auth.username }}
+
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.postgres.auth.username }}
+
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+          ports:
+            - containerPort: {{ .Values.postgres.service.port }}
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+        labels:
+          {{- include "orders-dashboard.labels" . | nindent 10 }}
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size }}            

@@ -1,0 +1,114 @@
+# Namespace
+namespace: orders-dashboard
+
+# Backend Configuration
+backend:
+  name: backend
+  replicaCount: 1
+
+  image:
+    repository: charanreddy12/orders-dashboard-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    name: backend-service
+    type: ClusterIP
+    port: 8080
+  
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "250m"
+    limits:
+      memory: "256Mi"
+      cpu: "350m"
+    
+  env:
+    # DATABASE_URL: postgresql://prometheus:prometheus@database-service:5432/prometheus
+    SECRET_KEY: change-me
+    APP_ENV: development
+    LOG_LEVEL: INFO
+
+# Frontend Configuration
+frontend:
+  name: frontend
+  replicaCount: 1
+
+  image:
+    repository: charanreddy12/orders-dashboard-frontend
+    tag: v1.0.2
+    pullPolicy: IfNotPresent
+  
+  service:
+    name: frontend-service
+    type: NodePort
+    port: 80
+    nodePort: 30011
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "850Mi"
+      cpu: "750m"
+  
+  env:
+    VITE_API_BASE_URL: /api
+    VITE_API_PROXY_TARGET: http://backend-service:8080
+
+# Postgres Configuration
+postgres:
+  name: postgres
+  replicaCount: 1
+
+  image: 
+    repository: postgres
+    tag: "16-alpine"
+
+  auth:
+    username: prometheus
+    password: prometheus
+    database: prometheus
+
+  storage:
+    size: 1Gi
+  
+  service:
+    name: database-service
+    headlessName: postgres-headless
+    port: 5432
+
+
+monitoring:
+  enabled: true
+  namespace: monitoring
+  interval: 15s
+
+
+# Prometheus Configuration
+prometheus:
+  name: prometheus-deployment
+
+  image:
+    repository: prom/prometheus
+    tag: latest
+
+  service:
+    name: prometheus-service
+    port: 9090
+    nodePort: 30022
+
+# Grafana Configuration
+grafana:
+  name: grafana-deployment
+
+  image: 
+    repository: grafana/grafana
+    tag: latest
+  
+  service:
+    name: grafana-service
+    port: 3000
+    nodePort: 30000

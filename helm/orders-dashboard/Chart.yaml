@@ -1,0 +1,9 @@
+apiVersion: v2
+name: orders-dashboard
+description: Dashboard Application with information about Users, Products and Orders information.
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.0.0"
