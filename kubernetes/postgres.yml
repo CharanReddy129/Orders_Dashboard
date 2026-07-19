@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-database
+  namespace: orders-dashboard
+spec:
+  selector:
+    matchLabels:
+      app: database
+  serviceName: database-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+      - name: postgres-container
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - prometheus
+            - -d
+            - prometheus
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        env:
+        - name: POSTGRES_DB
+          value: prometheus
+        - name: POSTGRES_USER
+          value: prometheus
+        - name: POSTGRES_PASSWORD
+          value: prometheus
+
+        volumeMounts:
+        - name: postgres-pvc
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-service
+  namespace: orders-dashboard
+spec:
+  clusterIP: None
+  selector:
+    app: database
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: orders-dashboard
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+    scrape_configs:
+    - job_name: "Admin Dashboard"
+      metrics_path: /api/metrics
+      static_configs: 
+        - targets:
+          - backend-service:8080

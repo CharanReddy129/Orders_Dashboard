@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: orders-dashboard
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend-container
+        image: charanreddy12/orders-dashboard-backend:latest
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "350m"
+        ports:
+        - containerPort: 8080
+
+        workingDir: /app/backend
+        command: [ "python" ]
+        args: [ "run.py" ]
+
+        env:
+        - name: DATABASE_URL
+          value: postgresql://prometheus:prometheus@database-service:5432/prometheus
+        - name: SECRET_KEY
+          value: change-me
+        - name: APP_ENV
+          value: development
+        - name: LOG_LEVEL
+          value: INFO
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: orders-dashboard
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 8080
+    targetPort: 8080
