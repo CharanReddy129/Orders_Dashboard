@@ -121,8 +121,8 @@ jobs:
       
       - name: Update Image tags
         run: |
-          yq -i '.frontend.image.tag = ${{ env.SHORT_SHA }}' gitops/helm/values.yaml
-          yq -i '.backend.image.tag = ${{ env.SHORT_SHA}}' gitops/helm/values.yaml
+          yq -i '.frontend.image.tag = strenv(SHORT_SHA)' gitops/helm/values.yaml
+          yq -i '.backend.image.tag = strenv(SHORT_SHA)' gitops/helm/values.yaml
       
       - name: Push changes to git
         run: |
